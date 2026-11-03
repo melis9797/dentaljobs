@@ -6,8 +6,12 @@ const supabasePublishableKey = 'sb_publishable_BL_b_LcuQAO6_PY4oOjFlw_debBgFxw';
 
 // Sitenin işleticisi. Yasal sayfalarda (iletişim, aydınlatma metni) herkese
 // görünür. Ad ve e-posta doldurulmadan Blog sekmesi açılmaz.
-const legalOperatorName = '';
-const legalContactEmail = '';
+//
+// DİKKAT: Aşağıdakiler TEST değerleridir (example.com gerçek bir kutuya
+// gitmez). Avukat kontrolünden sonra gerçek bilgilerle değiştirilmeden
+// uygulama yayınlanmamalı.
+const legalOperatorName = 'Dental Jobs (TEST SÜRÜMÜ)';
+const legalContactEmail = 'ornek@example.com';
 const legalAddress = '';
 
 /// Blog yalnızca işletici bilgileri girildiyse açılır (5651 sayılı Kanun,
