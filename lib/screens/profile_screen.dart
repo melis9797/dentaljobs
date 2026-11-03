@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config.dart';
 import '../constants.dart';
 import '../supabase_client.dart';
 import '../turkey_locations.dart';
 import '../widgets/form_widgets.dart';
 import '../widgets/location_fields.dart';
 import 'auth_screen.dart';
+import 'legal_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -76,6 +78,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _snack(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  Future<void> _deleteAccount() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hesabın silinsin mi?'),
+        content: const Text(
+          'Profilin, ilanların, başvuruların ve blog yazıların kalıcı olarak '
+          'silinir. Bu işlem geri alınamaz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Hesabımı sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await supabase.rpc('delete_my_account');
+    } catch (_) {
+      final contact = legalContactEmail.trim().isEmpty
+          ? 'İletişim sayfasındaki adrese'
+          : legalContactEmail.trim();
+      _snack('Hesap şu an uygulamadan silinemedi. $contact yazarak silme '
+          'talebinde bulunabilirsin.');
+      return;
+    }
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {}
+    _snack('Hesabın silindi.');
   }
 
   @override
@@ -148,6 +188,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 FilledButton(
                   onPressed: _saving ? null : _save,
                   child: const Text('Kaydet'),
+                ),
+                const SizedBox(height: 24),
+                const Divider(),
+                const LegalLinks(),
+                TextButton(
+                  onPressed: _deleteAccount,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: const Text('Hesabımı sil'),
                 ),
               ],
             ),

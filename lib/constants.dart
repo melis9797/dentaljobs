@@ -83,3 +83,20 @@ String jobProfileLabel(Map<String, dynamic> job) {
   return [jobProfiles[profile] ?? profile, if (detail != null) detail]
       .join(' · ');
 }
+
+/// Reasons a member can choose when reporting a blog post.
+const reportReasons = <String, String>{
+  'patient_info': 'Hasta bilgisi / kişisel veri',
+  'insult': 'Hakaret veya iftira',
+  'false_info': 'Yanıltıcı bilgi',
+  'spam': 'Spam / reklam',
+  'other': 'Diğer',
+};
+
+/// "2026-11-03T10:05:00" -> "03.11.2026 10:05" (device time zone).
+String dateTimeText(String? iso) {
+  final d = DateTime.tryParse(iso ?? '')?.toLocal();
+  if (d == null) return '';
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(d.day)}.${two(d.month)}.${d.year} ${two(d.hour)}:${two(d.minute)}';
+}

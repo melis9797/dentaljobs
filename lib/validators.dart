@@ -43,3 +43,39 @@ String? nullIfEmpty(String text) {
   final t = text.trim();
   return t.isEmpty ? null : t;
 }
+
+final _nicknamePattern = RegExp(r'^[a-z0-9_]{3,20}$');
+
+String normalizeNickname(String v) => v.trim().toLowerCase();
+
+String? nicknameField(String? v) {
+  if (_nicknamePattern.hasMatch(normalizeNickname(v ?? ''))) return null;
+  return 'Takma ad 3-20 karakter olmalı; yalnızca a-z, 0-9 ve _ kullan';
+}
+
+/// Telefon, T.C. kimlik no gibi 10+ haneli rakam dizilerini yakalar.
+/// Sunucudaki kontrolün aynısıdır; asıl kontrol veritabanında yapılır.
+bool containsPersonalData(String text) {
+  final stripped = text.replaceAll(RegExp(r'[\s.()+\-]'), '');
+  return RegExp(r'[0-9]{10,}').hasMatch(stripped);
+}
+
+String? blogTitleField(String? v) {
+  final t = (v ?? '').trim();
+  if (t.length < 3) return 'Başlık en az 3 karakter olmalı';
+  if (t.length > 120) return 'Başlık en fazla 120 karakter olabilir';
+  if (containsPersonalData(t)) {
+    return 'Telefon, T.C. kimlik no gibi kişisel bilgiler yazılamaz';
+  }
+  return null;
+}
+
+String? blogBodyField(String? v) {
+  final t = (v ?? '').trim();
+  if (t.isEmpty) return 'Bir şeyler yaz';
+  if (t.length > 2000) return 'En fazla 2000 karakter yazabilirsin';
+  if (containsPersonalData(t)) {
+    return 'Telefon, T.C. kimlik no gibi kişisel bilgiler yazılamaz';
+  }
+  return null;
+}

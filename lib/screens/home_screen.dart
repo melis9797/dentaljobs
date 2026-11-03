@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config.dart';
 import '../supabase_client.dart';
+import 'blog_tab.dart';
 import 'browse_screen.dart';
 import 'my_screen.dart';
 import 'profile_screen.dart';
@@ -28,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
             index: _index,
             children: [
               const BrowseScreen(),
+              if (blogEnabled) BlogTab(key: ValueKey('blog-$userId')),
               MyScreen(key: ValueKey('my-$userId')),
               ProfileScreen(key: ValueKey('profile-$userId')),
             ],
@@ -35,18 +38,24 @@ class _HomeScreenState extends State<HomeScreen> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: const [
-              NavigationDestination(
+            destinations: [
+              const NavigationDestination(
                 icon: Icon(Icons.work_outline),
                 selectedIcon: Icon(Icons.work),
                 label: 'İlanlar',
               ),
-              NavigationDestination(
+              if (blogEnabled)
+                const NavigationDestination(
+                  icon: Icon(Icons.forum_outlined),
+                  selectedIcon: Icon(Icons.forum),
+                  label: 'Blog',
+                ),
+              const NavigationDestination(
                 icon: Icon(Icons.list_alt_outlined),
                 selectedIcon: Icon(Icons.list_alt),
                 label: 'İlanlarım',
               ),
-              NavigationDestination(
+              const NavigationDestination(
                 icon: Icon(Icons.person_outline),
                 selectedIcon: Icon(Icons.person),
                 label: 'Profil',

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../supabase_client.dart';
 import '../widgets/form_widgets.dart';
+import 'legal_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -18,6 +19,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _name = TextEditingController();
   bool _signUp = false;
   bool _loading = false;
+  bool _accepted = false;
   String _role = 'dentist';
 
   @override
@@ -35,13 +37,21 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_signUp && !_accepted) {
+      _snack('Devam etmek için kullanım koşullarını ve aydınlatma metnini kabul etmelisin.');
+      return;
+    }
     setState(() => _loading = true);
     try {
       if (_signUp) {
         final res = await supabase.auth.signUp(
           email: _email.text.trim(),
           password: _password.text,
-          data: {'role': _role, 'full_name': _name.text.trim()},
+          data: {
+            'role': _role,
+            'full_name': _name.text.trim(),
+            'terms_accepted_at': DateTime.now().toUtc().toIso8601String(),
+          },
         );
         if (res.session == null) {
           _snack('Kayıt oluşturuldu. E-postanı doğrulayıp giriş yap.');
@@ -118,7 +128,17 @@ class _AuthScreenState extends State<AuthScreen> {
               validator: (v) =>
                   (v == null || v.length < 6) ? 'En az 6 karakter' : null,
             ),
-            const SizedBox(height: 20),
+            if (_signUp)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: _accepted,
+                onChanged: (v) => setState(() => _accepted = v ?? false),
+                title: const Text(
+                  'Kullanım koşullarını ve aydınlatma metnini okudum, kabul ediyorum.',
+                ),
+              ),
+            const SizedBox(height: 12),
             FilledButton(
               onPressed: _loading ? null : _submit,
               child: _loading
@@ -135,6 +155,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ? 'Zaten hesabım var, giriş yap'
                   : 'Hesabın yok mu? Kayıt ol'),
             ),
+            const LegalLinks(),
           ],
         ),
       ),
