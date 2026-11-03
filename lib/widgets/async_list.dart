@@ -28,7 +28,9 @@ class AsyncList extends StatefulWidget {
 class _AsyncListState extends State<AsyncList> {
   late Future<List<Map<String, dynamic>>> _future = widget.load();
 
-  void _reload() => setState(() => _future = widget.load());
+  void _reload() {
+    if (mounted) setState(() => _future = widget.load());
+  }
 
   @override
   void didUpdateWidget(AsyncList oldWidget) {

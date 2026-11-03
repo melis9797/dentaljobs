@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants.dart';
 import '../supabase_client.dart';
+import '../validators.dart';
 import '../widgets/form_widgets.dart';
 
 /// Lets a clinic account create its clinic (once) and then post jobs.
@@ -25,7 +26,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
   Map<String, dynamic>? _clinic;
   bool _loading = true;
   bool _saving = false;
-  String _specialty = 'general';
+  String _profile = 'staff';
+  String _experience = 'new_grad';
+  String _specialty = specialistBranches.keys.first;
   String _employment = 'full_time';
   String _city = cities.first;
 
@@ -49,11 +52,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
   void _snack(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  String? _nullIfEmpty(String text) {
-    final t = text.trim();
-    return t.isEmpty ? null : t;
   }
 
   Future<void> _loadClinic() async {
@@ -88,7 +86,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
             'owner_id': supabase.auth.currentUser!.id,
             'name': _clinicName.text.trim(),
             'city': _city,
-            'district': _nullIfEmpty(_district.text),
+            'district': nullIfEmpty(_district.text),
           })
           .select()
           .single();
@@ -104,15 +102,18 @@ class _PostJobScreenState extends State<PostJobScreen> {
   Future<void> _createJob() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    final isStaff = _profile == 'staff';
     try {
       await supabase.from('jobs').insert({
         'clinic_id': _clinic!['id'],
         'title': _title.text.trim(),
-        'description': _nullIfEmpty(_description.text),
-        'specialty': _specialty,
+        'description': nullIfEmpty(_description.text),
+        'job_profile': _profile,
+        'experience_level': isStaff ? _experience : null,
+        'specialty': isStaff ? 'general' : _specialty,
         'employment_type': _employment,
         'city': _city,
-        'district': _nullIfEmpty(_district.text),
+        'district': nullIfEmpty(_district.text),
         'salary_min': int.tryParse(_salaryMin.text.trim()),
         'salary_max': int.tryParse(_salaryMax.text.trim()),
       });
@@ -124,14 +125,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  String? _requiredValidator(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'Gerekli' : null;
-
-  String? _numberValidator(String? v) {
-    if (v == null || v.trim().isEmpty) return null;
-    return int.tryParse(v.trim()) == null ? 'Sayı gir' : null;
   }
 
   Widget _saveButton(String label, VoidCallback onPressed) {
@@ -151,7 +144,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('İlan verebilmek için önce klinik bilgilerini gir.'),
+        const Text('İş ilanı verebilmek için önce klinik bilgilerini gir.'),
         const SizedBox(height: 16),
         TextFormField(
           controller: _clinicName,
@@ -159,7 +152,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
             labelText: 'Klinik adı',
             border: OutlineInputBorder(),
           ),
-          validator: _requiredValidator,
+          validator: requiredField,
         ),
         const SizedBox(height: 12),
         LabeledDropdown(
@@ -183,23 +176,39 @@ class _PostJobScreenState extends State<PostJobScreen> {
   }
 
   Widget _jobForm() {
+    final isStaff = _profile == 'staff';
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        LabeledDropdown(
+          label: 'Pozisyon',
+          value: _profile,
+          options: jobProfiles,
+          onChanged: (v) => setState(() => _profile = v),
+        ),
+        const SizedBox(height: 12),
+        if (isStaff)
+          LabeledDropdown(
+            label: 'Deneyim grubu',
+            value: _experience,
+            options: experienceLevels,
+            onChanged: (v) => setState(() => _experience = v),
+          )
+        else
+          LabeledDropdown(
+            label: 'Branş',
+            value: _specialty,
+            options: specialistBranches,
+            onChanged: (v) => setState(() => _specialty = v),
+          ),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _title,
           decoration: const InputDecoration(
             labelText: 'İlan başlığı',
             border: OutlineInputBorder(),
           ),
-          validator: _requiredValidator,
-        ),
-        const SizedBox(height: 12),
-        LabeledDropdown(
-          label: 'Branş / pozisyon',
-          value: _specialty,
-          options: specialties,
-          onChanged: (v) => setState(() => _specialty = v),
+          validator: requiredField,
         ),
         const SizedBox(height: 12),
         LabeledDropdown(
@@ -234,7 +243,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   labelText: 'Min maaş (₺)',
                   border: OutlineInputBorder(),
                 ),
-                validator: _numberValidator,
+                validator: optionalNumber,
               ),
             ),
             const SizedBox(width: 12),
@@ -246,7 +255,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   labelText: 'Max maaş (₺)',
                   border: OutlineInputBorder(),
                 ),
-                validator: _numberValidator,
+                validator: optionalNumber,
               ),
             ),
           ],
@@ -270,7 +279,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Yeni ilan')),
+      appBar: AppBar(title: const Text('Yeni iş ilanı')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Form(

@@ -1,41 +1,30 @@
 # Dental Jobs
 
-Flutter + Supabase iş ilanı uygulaması (diş hekimi, asistan, teknisyen, klinik).
+Flutter + Supabase ilan uygulaması. Üç bölümü var:
 
-## Kurulum
+- **İş ilanları:** Staff diş hekimi (yeni mezun, 3 yıldan az deneyim, 3+ yıl deneyim) ve uzman diş hekimi (branşa göre). Kliniklerin ilan verdiği, hekimlerin başvurduğu bölüm.
+- **Klinik devir:** Devren satılık klinik ilanları (şehir, ünit sayısı, metrekare, fiyat).
+- **İmplant / Ekipman:** Sıfır ya da ikinci el implant ve klinik ekipmanı satış ilanları.
 
-1. Flutter'ı kur: https://docs.flutter.dev/get-started/install
-2. Bu klasörde platform dosyalarını oluştur (mevcut `lib/` ve `pubspec.yaml` korunur):
+## Yayın
 
-   ```
-   flutter create --platforms=android,ios --project-name dental_jobs .
-   flutter pub get
-   ```
+Kod `main` dalına gönderilince GitHub Actions iki iş çalıştırır:
 
-3. Çalıştır: `flutter run`
-4. Kontrol: `flutter analyze` ve `flutter test`
+- `Build Android APK`: analiz, test ve Android APK (Actions → çalışma → Artifacts).
+- `Deploy web to GitHub Pages`: web sürümünü yayınlar.
 
-## Önemli notlar
+## Yerelde çalıştırma
 
-- Supabase bağlantısı `lib/config.dart` içinde. Publishable anahtar uygulamanın içinde
-  durabilir; veriyi korumayı veritabanındaki satır güvenliği (RLS) kuralları yapar.
-- **Android release:** `android/app/src/main/AndroidManifest.xml` içine
-  `<uses-permission android:name="android.permission.INTERNET"/>` ekle. Yoksa mağaza
-  sürümü internete bağlanamaz.
-- **iOS:** derlemek için Mac ve Xcode gerekir.
-- **E-posta doğrulama:** Supabase varsayılan olarak kayıtta e-posta doğrulaması ister.
-  Denerken kapatmak için Supabase panelinde Authentication → Sign In / Providers → Email.
-- Hesap türü `dentist` iş arayan herkesi kapsar (hekim, asistan, teknisyen).
+```
+flutter create --platforms=android,ios,web --project-name dental_jobs .
+flutter pub get
+flutter run
+```
 
-## Ekranlar
+## Notlar
 
-- İlanlar: şehir ve branşa göre filtre, ilan detayı, başvuru
-- Başvuru/İlan: iş arayan için başvurularım, klinik için ilanlarım ve gelen başvurular
-- Profil: bilgileri düzenle, çıkış
-
-## Bilgisayara Flutter kurmadan derleme (GitHub Actions)
-
-`.github/workflows/build.yml` dosyası GitHub'ın sunucularında kodu analiz eder, testleri
-çalıştırır ve Android APK üretir. Projeyi GitHub'a yükle (`.github` klasörü dahil), Actions
-sekmesinden çalışmayı izle, bitince "dental-jobs-apk" dosyasını indir. APK imzasız
-(debug anahtarlı) bir test sürümüdür; Google Play'e yüklemek için ayrıca imzalanmalıdır.
+- Supabase bağlantısı `lib/config.dart` içinde. Publishable anahtar uygulamanın içinde durabilir; veriyi korumayı veritabanındaki satır güvenliği (RLS) kuralları yapar.
+- Klinik devir ve ekipman ilanlarını giriş yapmış herkes verebilir, iş ilanlarını yalnızca klinik hesapları verebilir.
+- Devir ve ekipman ilanlarındaki iletişim telefonu herkese görünür.
+- **Android release:** `AndroidManifest.xml` içinde `INTERNET` izni olmalı (iş akışı bunu otomatik ekler).
+- **E-posta doğrulama:** Denerken Supabase panelinde Authentication → Sign In / Providers → Email altından "Confirm email" kapatılabilir.

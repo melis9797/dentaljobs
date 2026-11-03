@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../supabase_client.dart';
-import 'jobs_screen.dart';
+import 'browse_screen.dart';
 import 'my_screen.dart';
 import 'profile_screen.dart';
 
@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
           body: IndexedStack(
             index: _index,
             children: [
-              const JobsScreen(),
+              const BrowseScreen(),
               MyScreen(key: ValueKey('my-$userId')),
               ProfileScreen(key: ValueKey('profile-$userId')),
             ],
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
               NavigationDestination(
                 icon: Icon(Icons.list_alt_outlined),
                 selectedIcon: Icon(Icons.list_alt),
-                label: 'Başvuru/İlan',
+                label: 'İlanlarım',
               ),
               NavigationDestination(
                 icon: Icon(Icons.person_outline),

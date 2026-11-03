@@ -1,10 +1,53 @@
 import 'package:dental_jobs/constants.dart';
+import 'package:dental_jobs/validators.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('salaryText formats ranges', () {
+  test('salaryText formats ranges with thousand separators', () {
     expect(salaryText(null, null), 'Maaş belirtilmemiş');
-    expect(salaryText(50000, 70000), '50000 – 70000 ₺');
-    expect(salaryText(50000, null), '50000 ₺');
+    expect(salaryText(50000, 70000), '50.000 – 70.000 ₺');
+    expect(salaryText(50000, null), '50.000 ₺');
+  });
+
+  test('priceText groups digits or falls back to negotiable', () {
+    expect(priceText(null), 'Fiyat görüşülür');
+    expect(priceText(0), '0 ₺');
+    expect(priceText(1250000), '1.250.000 ₺');
+  });
+
+  test('jobProfileLabel describes staff and specialist jobs', () {
+    expect(
+      jobProfileLabel({'job_profile': 'staff', 'experience_level': 'new_grad'}),
+      'Staff diş hekimi · Yeni mezun',
+    );
+    expect(
+      jobProfileLabel({'job_profile': 'staff', 'experience_level': 'junior'}),
+      'Staff diş hekimi · 3 yıldan az deneyim',
+    );
+    expect(
+      jobProfileLabel({'job_profile': 'staff', 'experience_level': 'senior'}),
+      'Staff diş hekimi · 3+ yıl deneyim',
+    );
+    expect(
+      jobProfileLabel({'job_profile': 'specialist', 'specialty': 'orthodontics'}),
+      'Uzman diş hekimi · Ortodonti',
+    );
+  });
+
+  test('specialist branches exclude the generic staff branch', () {
+    expect(specialistBranches.containsKey('general'), isFalse);
+    expect(specialistBranches.containsKey('orthodontics'), isTrue);
+  });
+
+  test('phone and number validators', () {
+    expect(cleanPhone('0555 000 00 00'), '05550000000');
+    expect(phoneField('0555 000 00 00'), isNull);
+    expect(phoneField('123'), isNotNull);
+    expect(optionalNumber(''), isNull);
+    expect(optionalNumber('abc'), isNotNull);
+    expect(optionalNumberUpTo(100)('101'), isNotNull);
+    expect(optionalNumberUpTo(100)('99'), isNull);
+    expect(titleField('ab'), isNotNull);
+    expect(titleField('Devren satılık klinik'), isNull);
   });
 }

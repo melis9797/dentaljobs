@@ -97,7 +97,7 @@ class JobDetailScreen extends StatelessWidget {
           Wrap(
             spacing: 8,
             children: [
-              Chip(label: Text(specialties[job['specialty']] ?? '')),
+              Chip(label: Text(jobProfileLabel(job))),
               Chip(label: Text(employmentTypes[job['employment_type']] ?? '')),
               Chip(
                 label: Text(salaryText(
