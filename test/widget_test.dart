@@ -1,4 +1,5 @@
 import 'package:dental_jobs/constants.dart';
+import 'package:dental_jobs/turkey_locations.dart';
 import 'package:dental_jobs/validators.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,6 +38,28 @@ void main() {
   test('specialist branches exclude the generic staff branch', () {
     expect(specialistBranches.containsKey('general'), isFalse);
     expect(specialistBranches.containsKey('orthodontics'), isTrue);
+  });
+
+  test('all 81 provinces and 973 districts are present', () {
+    expect(provinces.length, 81);
+    expect(turkeyDistricts.values.fold<int>(0, (n, l) => n + l.length), 973);
+    expect(provinces.first, 'Adana');
+    expect(provinces.last, 'Zonguldak');
+    expect(districtsOf('İstanbul').length, 39);
+    expect(districtsOf('Ankara').length, 25);
+    expect(districtsOf('İzmir').length, 30);
+    expect(districtsOf(null), isEmpty);
+    for (final entry in turkeyDistricts.entries) {
+      expect(entry.value, isNotEmpty, reason: entry.key);
+      expect(entry.value.toSet().length, entry.value.length, reason: entry.key);
+    }
+  });
+
+  test('normalizeTr lets plain letters find Turkish names', () {
+    expect(normalizeTr('İstanbul'), 'istanbul');
+    expect(normalizeTr('Iğdır'), 'igdir');
+    expect(normalizeTr('Şanlıurfa'), 'sanliurfa');
+    expect(normalizeTr('Çanakkale'), 'canakkale');
   });
 
   test('phone and number validators', () {

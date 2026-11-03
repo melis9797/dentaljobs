@@ -4,6 +4,7 @@ import '../constants.dart';
 import '../supabase_client.dart';
 import '../widgets/async_list.dart';
 import '../widgets/filter_dropdown.dart';
+import '../widgets/location_fields.dart';
 import 'listing_detail_screen.dart';
 
 class EquipmentTab extends StatefulWidget {
@@ -16,6 +17,7 @@ class EquipmentTab extends StatefulWidget {
 class _EquipmentTabState extends State<EquipmentTab>
     with AutomaticKeepAliveClientMixin {
   String? _city;
+  String? _district;
   String? _type;
   String? _condition;
 
@@ -26,6 +28,7 @@ class _EquipmentTabState extends State<EquipmentTab>
     var query =
         supabase.from('equipment_listings').select().eq('status', 'open');
     if (_city != null) query = query.eq('city', _city!);
+    if (_district != null) query = query.eq('district', _district!);
     if (_type != null) query = query.eq('item_type', _type!);
     if (_condition != null) query = query.eq('condition', _condition!);
     final data = await query.order('created_at', ascending: false).limit(50);
@@ -37,11 +40,13 @@ class _EquipmentTabState extends State<EquipmentTab>
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: Column(
         children: [
-          FilterDropdown(
-            allLabel: 'Tüm şehirler',
-            value: _city,
-            options: cityOptions,
-            onChanged: (v) => setState(() => _city = v),
+          LocationFilter(
+            city: _city,
+            district: _district,
+            onChanged: (city, district) => setState(() {
+              _city = city;
+              _district = district;
+            }),
           ),
           Row(
             children: [
@@ -73,7 +78,7 @@ class _EquipmentTabState extends State<EquipmentTab>
   Widget build(BuildContext context) {
     super.build(context);
     return AsyncList(
-      reloadKey: '$_city|$_type|$_condition',
+      reloadKey: '$_city|$_district|$_type|$_condition',
       load: _load,
       header: _filters(),
       emptyText: 'Bu filtrelere uygun ilan yok.',
@@ -90,6 +95,8 @@ class _EquipmentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brand = item['brand'] as String?;
+    final district = item['district'] as String?;
+    final place = '${item['city']}${district == null ? '' : ' / $district'}';
     final kind = [
       itemTypes[item['item_type']] ?? '',
       itemConditions[item['condition']] ?? '',
@@ -101,13 +108,13 @@ class _EquipmentTile extends StatelessWidget {
       child: ListTile(
         isThreeLine: true,
         title: Text(item['title'] as String),
-        subtitle: Text('${kind.join(' · ')}\n${item['city']} · $price'),
+        subtitle: Text('${kind.join(' · ')}\n$place · $price'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ListingDetailScreen(
               title: item['title'] as String,
-              subtitle: '${item['city']}',
+              subtitle: place,
               chips: [...kind, price],
               description: item['description'] as String?,
               phone: item['contact_phone'] as String,

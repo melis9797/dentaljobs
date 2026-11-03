@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants.dart';
 import '../supabase_client.dart';
+import '../turkey_locations.dart';
 import '../widgets/form_widgets.dart';
+import '../widgets/location_fields.dart';
 import 'auth_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -117,10 +119,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                LabeledDropdown(
+                SearchableDropdown(
                   label: 'Şehir',
                   value: _city,
-                  options: cityOptions,
+                  options: provinces,
                   onChanged: (v) => setState(() => _city = v),
                 ),
                 if (_role != 'clinic') ...[

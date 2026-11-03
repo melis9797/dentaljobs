@@ -1,19 +1,3 @@
-const cities = [
-  'İstanbul',
-  'Ankara',
-  'İzmir',
-  'Bursa',
-  'Antalya',
-  'Adana',
-  'Konya',
-  'Gaziantep',
-  'Kocaeli',
-  'Mersin',
-  'Diğer',
-];
-
-final cityOptions = {for (final c in cities) c: c};
-
 /// Dental branches. `general` is used for staff dentists.
 const specialties = <String, String>{
   'general': 'Genel diş hekimi',

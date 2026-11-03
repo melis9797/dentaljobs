@@ -5,6 +5,7 @@ import '../constants.dart';
 import '../supabase_client.dart';
 import '../validators.dart';
 import '../widgets/form_widgets.dart';
+import '../widgets/location_fields.dart';
 
 /// Post an implant or clinic equipment sale listing. Any signed-in user can post.
 class PostEquipmentScreen extends StatefulWidget {
@@ -23,7 +24,8 @@ class _PostEquipmentScreenState extends State<PostEquipmentScreen> {
   final _description = TextEditingController();
   String _type = 'equipment';
   String _condition = 'used';
-  String _city = cities.first;
+  String? _city;
+  String? _district;
   bool _saving = false;
 
   @override
@@ -57,6 +59,12 @@ class _PostEquipmentScreenState extends State<PostEquipmentScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final locationProblem =
+        locationError(_city, _district, districtRequired: false);
+    if (locationProblem != null) {
+      _snack(locationProblem);
+      return;
+    }
     setState(() => _saving = true);
     try {
       await supabase.from('equipment_listings').insert({
@@ -67,6 +75,7 @@ class _PostEquipmentScreenState extends State<PostEquipmentScreen> {
         'condition': _condition,
         'brand': nullIfEmpty(_brand.text),
         'city': _city,
+        'district': _district,
         'price': int.tryParse(_price.text.trim()),
         'contact_phone': cleanPhone(_phone.text),
       });
@@ -118,11 +127,14 @@ class _PostEquipmentScreenState extends State<PostEquipmentScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            LabeledDropdown(
-              label: 'Şehir',
-              value: _city,
-              options: cityOptions,
-              onChanged: (v) => setState(() => _city = v),
+            LocationFields(
+              city: _city,
+              district: _district,
+              districtRequired: false,
+              onChanged: (city, district) => setState(() {
+                _city = city;
+                _district = district;
+              }),
             ),
             const SizedBox(height: 12),
             TextFormField(

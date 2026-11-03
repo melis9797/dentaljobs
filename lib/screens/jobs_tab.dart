@@ -4,6 +4,7 @@ import '../constants.dart';
 import '../supabase_client.dart';
 import '../widgets/async_list.dart';
 import '../widgets/filter_dropdown.dart';
+import '../widgets/location_fields.dart';
 import 'job_detail_screen.dart';
 
 class JobsTab extends StatefulWidget {
@@ -16,6 +17,7 @@ class JobsTab extends StatefulWidget {
 class _JobsTabState extends State<JobsTab>
     with AutomaticKeepAliveClientMixin {
   String? _city;
+  String? _district;
   String? _profile;
   String? _experience;
   String? _specialty;
@@ -27,6 +29,7 @@ class _JobsTabState extends State<JobsTab>
     var query =
         supabase.from('jobs').select('*, clinics(name)').eq('status', 'open');
     if (_city != null) query = query.eq('city', _city!);
+    if (_district != null) query = query.eq('district', _district!);
     if (_profile != null) query = query.eq('job_profile', _profile!);
     if (_profile == 'staff' && _experience != null) {
       query = query.eq('experience_level', _experience!);
@@ -43,30 +46,23 @@ class _JobsTabState extends State<JobsTab>
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: FilterDropdown(
-                  allLabel: 'Tüm şehirler',
-                  value: _city,
-                  options: cityOptions,
-                  onChanged: (v) => setState(() => _city = v),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilterDropdown(
-                  allLabel: 'Tüm pozisyonlar',
-                  value: _profile,
-                  options: jobProfiles,
-                  onChanged: (v) => setState(() {
-                    _profile = v;
-                    _experience = null;
-                    _specialty = null;
-                  }),
-                ),
-              ),
-            ],
+          LocationFilter(
+            city: _city,
+            district: _district,
+            onChanged: (city, district) => setState(() {
+              _city = city;
+              _district = district;
+            }),
+          ),
+          FilterDropdown(
+            allLabel: 'Tüm pozisyonlar',
+            value: _profile,
+            options: jobProfiles,
+            onChanged: (v) => setState(() {
+              _profile = v;
+              _experience = null;
+              _specialty = null;
+            }),
           ),
           if (_profile == 'staff')
             FilterDropdown(
@@ -91,7 +87,7 @@ class _JobsTabState extends State<JobsTab>
   Widget build(BuildContext context) {
     super.build(context);
     return AsyncList(
-      reloadKey: '$_city|$_profile|$_experience|$_specialty',
+      reloadKey: '$_city|$_district|$_profile|$_experience|$_specialty',
       load: _load,
       header: _filters(),
       emptyText: 'Bu filtrelere uygun ilan yok.',
@@ -109,6 +105,8 @@ class _JobTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final clinic = job['clinics'] as Map<String, dynamic>?;
     final clinicName = (clinic?['name'] as String?) ?? 'Klinik';
+    final district = job['district'] as String?;
+    final place = '${job['city']}${district == null ? '' : ' / $district'}';
     final employment = employmentTypes[job['employment_type']] ?? '';
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -116,7 +114,7 @@ class _JobTile extends StatelessWidget {
         isThreeLine: true,
         title: Text(job['title'] as String),
         subtitle: Text(
-          '$clinicName · ${job['city']}\n${jobProfileLabel(job)} · $employment',
+          '$clinicName · $place\n${jobProfileLabel(job)} · $employment',
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.of(context).push(

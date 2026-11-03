@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../constants.dart';
 import '../supabase_client.dart';
 import '../validators.dart';
-import '../widgets/form_widgets.dart';
+import '../widgets/location_fields.dart';
 
 /// Post a clinic transfer (devir) listing. Any signed-in user can post.
 class PostTransferScreen extends StatefulWidget {
@@ -17,13 +16,13 @@ class PostTransferScreen extends StatefulWidget {
 class _PostTransferScreenState extends State<PostTransferScreen> {
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
-  final _district = TextEditingController();
   final _units = TextEditingController();
   final _area = TextEditingController();
   final _price = TextEditingController();
   final _phone = TextEditingController();
   final _description = TextEditingController();
-  String _city = cities.first;
+  String? _city;
+  String? _district;
   bool _saving = false;
 
   @override
@@ -35,7 +34,6 @@ class _PostTransferScreenState extends State<PostTransferScreen> {
   @override
   void dispose() {
     _title.dispose();
-    _district.dispose();
     _units.dispose();
     _area.dispose();
     _price.dispose();
@@ -59,6 +57,11 @@ class _PostTransferScreenState extends State<PostTransferScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final locationProblem = locationError(_city, _district);
+    if (locationProblem != null) {
+      _snack(locationProblem);
+      return;
+    }
     setState(() => _saving = true);
     try {
       await supabase.from('clinic_transfers').insert({
@@ -66,7 +69,7 @@ class _PostTransferScreenState extends State<PostTransferScreen> {
         'title': _title.text.trim(),
         'description': nullIfEmpty(_description.text),
         'city': _city,
-        'district': nullIfEmpty(_district.text),
+        'district': _district,
         'unit_count': int.tryParse(_units.text.trim()),
         'area_m2': int.tryParse(_area.text.trim()),
         'price': int.tryParse(_price.text.trim()),
@@ -98,19 +101,13 @@ class _PostTransferScreenState extends State<PostTransferScreen> {
               validator: titleField,
             ),
             const SizedBox(height: 12),
-            LabeledDropdown(
-              label: 'Şehir',
-              value: _city,
-              options: cityOptions,
-              onChanged: (v) => setState(() => _city = v),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _district,
-              decoration: const InputDecoration(
-                labelText: 'İlçe',
-                border: OutlineInputBorder(),
-              ),
+            LocationFields(
+              city: _city,
+              district: _district,
+              onChanged: (city, district) => setState(() {
+                _city = city;
+                _district = district;
+              }),
             ),
             const SizedBox(height: 12),
             Row(

@@ -3,8 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants.dart';
 import '../supabase_client.dart';
+import '../turkey_locations.dart';
 import '../validators.dart';
 import '../widgets/form_widgets.dart';
+import '../widgets/location_fields.dart';
 
 /// Lets a clinic account create its clinic (once) and then post jobs.
 class PostJobScreen extends StatefulWidget {
@@ -18,7 +20,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
   final _formKey = GlobalKey<FormState>();
   final _clinicName = TextEditingController();
   final _title = TextEditingController();
-  final _district = TextEditingController();
   final _salaryMin = TextEditingController();
   final _salaryMax = TextEditingController();
   final _description = TextEditingController();
@@ -30,7 +31,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
   String _experience = 'new_grad';
   String _specialty = specialistBranches.keys.first;
   String _employment = 'full_time';
-  String _city = cities.first;
+  String? _city;
+  String? _district;
 
   @override
   void initState() {
@@ -42,7 +44,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
   void dispose() {
     _clinicName.dispose();
     _title.dispose();
-    _district.dispose();
     _salaryMin.dispose();
     _salaryMax.dispose();
     _description.dispose();
@@ -66,8 +67,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
       setState(() {
         _clinic = clinic;
         final city = clinic?['city'] as String?;
-        if (city != null && cities.contains(city)) _city = city;
-        _district.text = (clinic?['district'] as String?) ?? '';
+        if (city != null && provinces.contains(city)) {
+          _city = city;
+          final district = clinic?['district'] as String?;
+          if (district != null && districtsOf(city).contains(district)) {
+            _district = district;
+          }
+        }
       });
     } catch (_) {
       _snack('Klinik bilgisi yüklenemedi.');
@@ -78,6 +84,11 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
   Future<void> _createClinic() async {
     if (!_formKey.currentState!.validate()) return;
+    final locationProblem = locationError(_city, _district);
+    if (locationProblem != null) {
+      _snack(locationProblem);
+      return;
+    }
     setState(() => _saving = true);
     try {
       final clinic = await supabase
@@ -86,7 +97,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
             'owner_id': supabase.auth.currentUser!.id,
             'name': _clinicName.text.trim(),
             'city': _city,
-            'district': nullIfEmpty(_district.text),
+            'district': _district,
           })
           .select()
           .single();
@@ -101,6 +112,11 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
   Future<void> _createJob() async {
     if (!_formKey.currentState!.validate()) return;
+    final locationProblem = locationError(_city, _district);
+    if (locationProblem != null) {
+      _snack(locationProblem);
+      return;
+    }
     setState(() => _saving = true);
     final isStaff = _profile == 'staff';
     try {
@@ -113,7 +129,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
         'specialty': isStaff ? 'general' : _specialty,
         'employment_type': _employment,
         'city': _city,
-        'district': nullIfEmpty(_district.text),
+        'district': _district,
         'salary_min': int.tryParse(_salaryMin.text.trim()),
         'salary_max': int.tryParse(_salaryMax.text.trim()),
       });
@@ -155,19 +171,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
           validator: requiredField,
         ),
         const SizedBox(height: 12),
-        LabeledDropdown(
-          label: 'Şehir',
-          value: _city,
-          options: cityOptions,
-          onChanged: (v) => setState(() => _city = v),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _district,
-          decoration: const InputDecoration(
-            labelText: 'İlçe',
-            border: OutlineInputBorder(),
-          ),
+        LocationFields(
+          city: _city,
+          district: _district,
+          onChanged: (city, district) => setState(() {
+            _city = city;
+            _district = district;
+          }),
         ),
         const SizedBox(height: 20),
         _saveButton('Kliniği kaydet', _createClinic),
@@ -218,19 +228,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
           onChanged: (v) => setState(() => _employment = v),
         ),
         const SizedBox(height: 12),
-        LabeledDropdown(
-          label: 'Şehir',
-          value: _city,
-          options: cityOptions,
-          onChanged: (v) => setState(() => _city = v),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _district,
-          decoration: const InputDecoration(
-            labelText: 'İlçe',
-            border: OutlineInputBorder(),
-          ),
+        LocationFields(
+          city: _city,
+          district: _district,
+          onChanged: (city, district) => setState(() {
+            _city = city;
+            _district = district;
+          }),
         ),
         const SizedBox(height: 12),
         Row(
